@@ -1,0 +1,130 @@
+-- Create or replace tables and insert simulated data for 'airline' DB
+
+DROP TABLE IF EXISTS bookings CASCADE;
+DROP TABLE IF EXISTS passengers CASCADE;
+DROP TABLE IF EXISTS flights CASCADE;
+DROP TABLE IF EXISTS weather_reports CASCADE;
+DROP TABLE IF EXISTS daily_flight_counts CASCADE;
+DROP TABLE IF EXISTS airports CASCADE;
+
+CREATE TABLE IF NOT EXISTS airports (
+    airport_code VARCHAR(10) PRIMARY KEY,
+    airport_name VARCHAR(100),
+    city VARCHAR(100),
+    country VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS flights (
+    flight_id SERIAL PRIMARY KEY,
+    flight_number VARCHAR(10),
+    origin VARCHAR(10),
+    destination VARCHAR(10),
+    departure_time TIMESTAMP(0),
+    arrival_time TIMESTAMP(0),
+    aircraft_id INT,
+    delay_minutes INT
+);
+
+CREATE TABLE IF NOT EXISTS passengers (
+    passenger_id SERIAL PRIMARY KEY,
+    full_name VARCHAR(100),
+    email VARCHAR(100),
+    loyalty_status VARCHAR(20)
+);
+
+CREATE TABLE IF NOT EXISTS bookings (
+    booking_id SERIAL PRIMARY KEY,
+    passenger_id INT REFERENCES passengers(passenger_id),
+    flight_id INT REFERENCES flights(flight_id),
+    booking_date DATE
+);
+
+CREATE TABLE IF NOT EXISTS weather_reports (
+    report_id SERIAL PRIMARY KEY,
+    airport_code VARCHAR(10),
+    report_time TIMESTAMP(0),
+    weather_condition VARCHAR(50),
+    visibility_km DECIMAL(5,2),
+    FOREIGN KEY (airport_code) REFERENCES airports(airport_code)
+);
+
+CREATE TABLE IF NOT EXISTS daily_flight_counts (
+    flight_date DATE,
+    origin VARCHAR(10),
+    destination VARCHAR(10),
+    flight_count INT
+);
+
+-- Insert simulated data
+INSERT INTO airports (airport_code, airport_name, city, country)
+VALUES
+    ('AKL', 'Auckland International', 'Auckland', 'New Zealand'),
+    ('CHC', 'Christchurch Airport', 'Christchurch', 'New Zealand'),
+    ('WLG', 'Wellington Airport', 'Wellington', 'New Zealand'),
+    ('SYD', 'Sydney Airport', 'Sydney', 'Australia'),
+    ('MEL', 'Melbourne Airport', 'Melbourne', 'Australia')
+ON CONFLICT DO NOTHING;
+
+INSERT INTO passengers (full_name, email, loyalty_status)
+SELECT
+    'Passenger ' || i,
+    'passenger' || i || '@example.com',
+    CASE WHEN i % 4 = 0 THEN 'Gold'
+         WHEN i % 4 = 1 THEN 'Silver'
+         WHEN i % 4 = 2 THEN 'Bronze'
+         ELSE 'None' END
+FROM generate_series(1, 30) AS s(i);
+
+INSERT INTO flights (flight_number, origin, destination, departure_time, arrival_time, aircraft_id, delay_minutes)
+SELECT
+    'NZ' || 100 + i,
+    origin,
+    destination,
+    date_trunc('minute', NOW() - INTERVAL '1 day' * (i % 30) - INTERVAL '1 hour' * (i % 12)),
+    date_trunc('minute', NOW() - INTERVAL '1 day' * (i % 30) + INTERVAL '2 hours' + INTERVAL '30 minutes' * (i % 4)),
+    (i % 5) + 1,
+    (i * 3) % 20
+FROM (
+    SELECT i, 
+           CASE WHEN i % 2 = 0 THEN 'AKL'
+                WHEN i % 3 = 0 THEN 'CHC'
+                ELSE 'WLG' END AS origin,
+           CASE WHEN i % 2 = 1 THEN 'SYD'
+                ELSE 'MEL' END AS destination
+    FROM generate_series(1, 60) AS s(i)
+) sub;
+
+INSERT INTO bookings (passenger_id, flight_id, booking_date)
+SELECT
+    (i % 30) + 1,
+    (i % 60) + 1,
+    CURRENT_DATE - INTERVAL '1 day' * (i % 15)
+FROM generate_series(1, 100) AS s(i);
+
+INSERT INTO weather_reports (airport_code, report_time, weather_condition, visibility_km)
+SELECT
+    code,
+    date_trunc('minute', NOW() - INTERVAL '1 hour' * (i % 72) - INTERVAL '5 minutes' * (i % 6)),
+    CASE WHEN i % 4 = 0 THEN 'Sunny'
+         WHEN i % 4 = 1 THEN 'Cloudy'
+         WHEN i % 4 = 2 THEN 'Rain'
+         ELSE 'Fog' END,
+    10.0 - (i % 5)
+FROM generate_series(1, 100) AS s(i),
+     (SELECT unnest(array['AKL','CHC','WLG','SYD','MEL']) AS code) AS airport;
+
+INSERT INTO daily_flight_counts (flight_date, origin, destination, flight_count)
+SELECT
+    CURRENT_DATE - INTERVAL '1 day' * (i % 30),
+    origin,
+    destination,
+    (i % 10) + 1
+FROM (
+    SELECT i, 
+           CASE WHEN i % 2 = 0 THEN 'AKL'
+                WHEN i % 3 = 0 THEN 'CHC'
+                ELSE 'WLG' END AS origin,
+           CASE WHEN i % 2 = 1 THEN 'SYD'
+                ELSE 'MEL' END AS destination
+    FROM generate_series(1, 90) AS s(i)
+) sub;
