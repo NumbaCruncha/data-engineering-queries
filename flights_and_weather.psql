@@ -20,12 +20,18 @@ with flights_and_conditions as (
 
     left join   weather_reports
              on flights.destination = weather_reports.airport_code
-             and weather_reports.report_time between flights.arrival_time - INTERVAL '1 hour' 
+             and weather_reports.report_time 
+                    between flights.arrival_time - INTERVAL '1 hour' 
              and weather_reports.report_time
 )
 
 
-select          flight_number
+select          
+                distinct
+                flight_number
+            ,   report_time
+            ,   DATE_TRUNC('month', arrival_time) as ARRIVAL_MONTH
+            ,   (DATE_TRUNC('month', arrival_time) + INTERVAL '1 month')::date - 1 as ARRIVAL_MONTH_END
             ,   arrival_time
             ,   destination
             ,   delay_minutes
@@ -35,6 +41,7 @@ select          flight_number
 
 from            flights_and_conditions
 
--- where           flight_rank = 1
-order by flight_number, arrival_time asc
+where           flight_rank = 1 and weather_condition is not null
+-- order by        flight_id, arrival_time asc
 
+;

@@ -179,6 +179,7 @@ wind_speed_kph
 ```
 
 
+
 ```sql
 
 with flights_and_conditions as (
@@ -207,7 +208,8 @@ with flights_and_conditions as (
 )
 
 
-select          flight_number
+select          flight_id
+            ,   flight_number
             ,   arrival_time
             ,   destination
             ,   delay_minutes
