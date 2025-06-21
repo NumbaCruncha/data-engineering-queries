@@ -1,0 +1,53 @@
+/*
+Calculate average delay per aircraft across all flights, and 
+return the aircraft that had the highest number of delayed flights (delay_minutes > 0).
+*/
+
+
+with 
+
+    flight_details as (
+
+    select          aircraft_id
+                ,   delay_minutes
+
+    from            flights
+
+    where           delay_minutes > 0
+)
+
+
+,   aggregation as (
+    
+    select          aircraft_id
+                ,   count(*) as delay_count
+                ,   avg(delay_minutes) as avg_delay_minutes
+
+    from            flight_details
+
+    group by        aircraft_id
+
+
+)
+
+
+,   delay_rank as (
+
+    select          aircraft_id
+                ,   avg_delay_minutes
+                ,   row_number() over (
+                        order by avg_delay_minutes
+                ) as delay_minutes_rank
+
+    from        aggregation
+
+
+)
+
+
+select          aircraft_id
+            ,   avg_delay_minutes
+
+from            delay_rank
+
+where           delay_minutes_rank = 1

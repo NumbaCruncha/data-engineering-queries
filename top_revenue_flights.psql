@@ -1,0 +1,59 @@
+/*
+Write a query to find the top 3 most revenue-generating flight routes (origin–destination pairs)
+Assume the revenue for each booking is:
+
+- $200 for "None"
+- $400 for "Bronze"
+- $600 for "Silver"
+- $800 for "Gold" loyalty passengers
+*/
+
+
+with           
+
+    flight_details as (
+
+        select          flights.origin
+                    ,   flights.destination
+                    ,   bookings.booking_id
+                    ,   case 
+                            when passengers.loyalty_status is null then 200.00
+                            when passengers.loyalty_status = 'Bronze' then 400.00
+                            when passengers.loyalty_status = 'Silver' then 600.00
+                            when passengers.loyalty_status = 'Gold' then 800.00
+                            else null end
+                        as  revenue
+
+        from            flights
+        join            bookings
+                    on  flights.flight_id = bookings.flight_id
+
+        join            passengers
+                    on  bookings.passenger_id = passengers.passenger_id
+)
+
+,   aggreation as (
+
+        select          concat_ws('_', origin, destination) as route
+                    ,   count(booking_id) as number_of_bookings
+                    ,   sum(revenue) as total_revenue
+                    ,   row_number() over (
+                            order by sum(revenue) desc
+                    ) as revenue_rank
+
+        from            flight_details
+
+        group by        origin
+                    ,   destination
+
+)
+
+
+select          route
+            ,   number_of_bookings
+            ,   total_revenue
+
+
+from            aggreation
+
+where           revenue_rank <= 3

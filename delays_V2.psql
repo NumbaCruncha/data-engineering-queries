@@ -1,5 +1,5 @@
 /*
-“Which flight numbers have had delays more than 10 minutes on at least two different days?”
+Which flight numbers have had delays more than 10 minutes on at least two different days?
 */
 
 select          
