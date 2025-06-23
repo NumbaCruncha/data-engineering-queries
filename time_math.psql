@@ -1,0 +1,124 @@
+/*
+Q1 “For each flight, calculate the scheduled flight duration in minutes between departure and arrival time.”
+*/
+
+
+select          flight_id
+            ,   extract(epoch from (arrival_time - departure_time)) / 60 as scheduled_duration
+
+from            flights
+;
+
+
+
+/*
+Q2. Find all flights that lasted longer than 180 minutes (3 hours).
+    Return the flight ID, origin, destination, and flight duration
+*/
+
+with
+
+    flight_durations as (
+
+        select          flight_id
+                    ,   extract(epoch from (arrival_time - departure_time)) / 60 as scheduled_duration
+
+        from            flights
+)
+
+select          flight_id
+            ,   scheduled_duration
+
+from            flight_durations
+
+where           scheduled_duration > 180 
+
+;
+
+
+/*
+Q3 (Advanced):
+“For each route (origin → destination), calculate the average duration and the standard deviation of flight durations. 
+Only include routes with more than 2 flights.”
+*/
+
+with
+
+    flight_durations as (
+
+        select          flight_id
+                    ,   origin
+                    ,   destination
+                    ,   extract(epoch from (arrival_time - departure_time)) / 60 as scheduled_duration
+
+        from            flights
+
+)
+
+,   route_duration_stats as (
+
+        select          concat_ws('_', origin, destination) as route
+                    ,   round(avg(scheduled_duration), 2) as avg_duration
+                    ,   round(stddev(scheduled_duration),2) as sd_duration
+
+        from            flight_durations
+
+        group by        origin
+                    ,   destination
+
+        having          count(flight_id) >= 2
+)
+
+
+select                  route
+                    ,   avg_duration
+                    ,   sd_duration
+
+from                    route_duration_stats
+
+order by                avg_duration desc
+
+;
+
+
+
+/*
+ Challenge: Identify flights that arrived over 10 minutes later than scheduled — 
+ and determine the weather condition at the arrival airport within 30 minutes of landing.
+*/
+
+with
+
+    flight_durations as (
+
+        select          flights.flight_id
+                    ,   flights.delay_minutes
+                    ,   flights.destination
+                    ,   weather_reports.weather_condition
+                    ,   row_number() over (
+                            partition by flights.flight_id, flights.destination
+                            order by weather_reports.report_time desc
+                    ) as arrival_time_rank
+                    ,   extract(epoch from (flights.arrival_time - flights.departure_time)) / 60 as scheduled_duration
+
+        from            flights
+
+        left join       weather_reports
+                    on  flights.destination = weather_reports.airport_code
+                    and weather_reports.report_time between flights.arrival_time - interval '30 minutes' and flights.arrival_time
+
+        where           delay_minutes > 15
+
+    )
+
+select                  flight_id
+                    ,   weather_condition
+                    ,   scheduled_duration
+
+from                    flight_durations
+
+where                   arrival_time_rank = 1
+
+
+
+

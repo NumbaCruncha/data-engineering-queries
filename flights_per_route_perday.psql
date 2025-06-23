@@ -1,0 +1,15 @@
+
+select              concat_ws(':', origin, destination) as route
+                ,   origin
+                ,   destination
+                ,   date_trunc('day', departure_time) as flight_date
+                ,   count(flight_id) as daily_flight_count
+    
+from                flights
+
+group by            origin
+                ,   destination
+                ,   date_trunc('day', departure_time)
+
+order by            flight_date, origin
+  

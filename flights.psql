@@ -1,0 +1,11 @@
+
+    select      flights.flight_id
+            ,   flights.arrival_time
+            ,   flight_number
+            ,   flights.origin
+            ,   flights.destination
+            ,   flights.delay_minutes
+
+    from        flights
+
+

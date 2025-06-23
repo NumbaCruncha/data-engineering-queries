@@ -1,0 +1,158 @@
+-- Create or replace tables and insert simulated data for 'airline' DB
+
+DROP TABLE IF EXISTS bookings CASCADE;
+DROP TABLE IF EXISTS passengers CASCADE;
+DROP TABLE IF EXISTS flights CASCADE;
+DROP TABLE IF EXISTS weather_reports CASCADE;
+DROP TABLE IF EXISTS daily_flight_counts CASCADE;
+DROP TABLE IF EXISTS airports CASCADE;
+
+CREATE TABLE IF NOT EXISTS airports (
+    airport_code VARCHAR(10) PRIMARY KEY,
+    airport_name VARCHAR(100),
+    city VARCHAR(100),
+    country VARCHAR(100)
+);
+
+CREATE TABLE IF NOT EXISTS flights (
+    flight_id SERIAL PRIMARY KEY,
+    flight_number VARCHAR(10),
+    origin VARCHAR(10),
+    destination VARCHAR(10),
+    departure_time TIMESTAMP(0),
+    arrival_time TIMESTAMP(0),
+    aircraft_id INT,
+    delay_minutes INT
+);
+
+CREATE TABLE IF NOT EXISTS passengers (
+    passenger_id SERIAL PRIMARY KEY,
+    full_name VARCHAR(100),
+    email VARCHAR(100),
+    loyalty_status VARCHAR(20)
+);
+
+CREATE TABLE IF NOT EXISTS bookings (
+    booking_id SERIAL PRIMARY KEY,
+    passenger_id INT REFERENCES passengers(passenger_id),
+    flight_id INT REFERENCES flights(flight_id),
+    booking_date DATE
+);
+
+CREATE TABLE IF NOT EXISTS weather_reports (
+    report_id SERIAL PRIMARY KEY,
+    airport_code VARCHAR(10),
+    report_time TIMESTAMP(0),
+    weather_condition VARCHAR(50),
+    visibility_km DECIMAL(5,2),
+    FOREIGN KEY (airport_code) REFERENCES airports(airport_code)
+);
+
+CREATE TABLE IF NOT EXISTS daily_flight_counts (
+    flight_date DATE,
+    origin VARCHAR(10),
+    destination VARCHAR(10),
+    flight_count INT
+);
+
+-- Insert hardcoded simulated data
+INSERT INTO airports (airport_code, airport_name, city, country) VALUES
+    ('AKL', 'Auckland International', 'Auckland', 'New Zealand'),
+    ('CHC', 'Christchurch Airport', 'Christchurch', 'New Zealand'),
+    ('WLG', 'Wellington Airport', 'Wellington', 'New Zealand'),
+    ('SYD', 'Sydney Airport', 'Sydney', 'Australia'),
+    ('MEL', 'Melbourne Airport', 'Melbourne', 'Australia');
+
+INSERT INTO passengers (passenger_id, full_name, email, loyalty_status) VALUES
+    (1, 'Alice Johnson', 'alice.j@example.com', 'Gold'),
+    (2, 'Bob Smith', 'bob.s@example.com', 'Silver'),
+    (3, 'Charlie Rose', 'charlie.r@example.com', 'Bronze'),
+    (4, 'Dana White', 'dana.w@example.com', 'None'),
+    (5, 'Charles Schrader', 'charles.s@example.com', 'Gold'),
+    (6, 'Eve Adams', 'eve.a@example.com', 'Silver'),
+    (7, 'Frank Castle', 'frank.c@example.com', 'Gold')
+    ;
+
+INSERT INTO flights (flight_number, origin, destination, departure_time, arrival_time, aircraft_id, delay_minutes) VALUES
+    ('NZ101', 'AKL', 'SYD', '2024-06-01 08:00', '2024-06-01 09:15', 1, 5),
+    ('NZ101', 'AKL', 'SYD', '2024-06-01 09:00', '2024-06-01 10:07', 1, 12),
+    ('NZ101', 'AKL', 'SYD', '2024-06-01 10:00', '2024-06-01 11:01', 1, 2),
+    ('NZ101', 'AKL', 'SYD', '2024-06-01 11:00', '2024-06-01 11:45', 1, 4),
+    ('NZ101', 'AKL', 'SYD', '2024-06-02 09:00', '2024-06-02 12:00', 2, 0),
+    ('NZ101', 'AKL', 'SYD', '2024-06-03 07:30', '2024-06-03 10:30', 3, 10),
+    ('NZ102', 'CHC', 'MEL', '2024-06-01 13:00', '2024-06-01 16:00', 1, 22),
+    ('NZ102', 'CHC', 'MEL', '2024-06-02 13:15', '2024-06-02 16:15', 2, 3),
+    ('NZ102', 'CHC', 'MEL', '2024-06-01 14:00', '2024-06-01 17:00', 1, 15),
+    ('NZ102', 'CHC', 'MEL', '2024-06-02 14:30', '2024-06-02 17:30', 2, 8),
+    ('NZ103', 'WLG', 'SYD', '2024-06-01 09:00', '2024-06-01 12:00', 1, 0),
+    ('NZ103', 'WLG', 'SYD', '2024-06-01 10:00', '2024-06-01 13:00', 1, 11),
+    ('NZ103', 'WLG', 'SYD', '2024-06-02 10:00', '2024-06-02 13:00', 1, 5),
+    ('NZ103', 'WLG', 'SYD', '2024-06-03 10:00', '2024-06-03 13:00', 1, 7),
+    ('NZ103', 'WLG', 'SYD', '2024-06-01 11:00', '2024-06-01 14:00', 1, 9),
+    ('NZ103', 'WLG', 'SYD', '2024-06-02 11:00', '2024-06-02 14:00', 1, 6),
+    ('NZ103', 'WLG', 'SYD', '2024-06-03 11:00', '2024-06-03 14:00', 1, 8),
+    ('NZ103', 'WLG', 'SYD', '2024-06-01 12:00', '2024-06-01 15:00', 1, 3),
+    ('NZ103', 'WLG', 'SYD', '2024-06-02 12:00', '2024-06-02 15:00', 1, 4),
+    ('NZ103', 'WLG', 'SYD', '2024-06-03 12:00', '2024-06-03 15:00', 1, 2),
+    ('NZ103', 'WLG', 'SYD', '2024-06-01 13:00', '2024-06-01 16:00', 1, 1),
+    ('NZ103', 'WLG', 'SYD', '2024-06-01 10:00', '2024-06-01 13:00', 1, 11);
+
+INSERT INTO bookings (passenger_id, flight_id, booking_date) VALUES
+    (1, 1, '2024-05-25'),
+    (2, 2, '2024-05-26'),
+    (3, 3, '2024-05-27'),
+    (4, 4, '2024-05-28'),
+    (1, 5, '2024-05-29'),
+    (1, 6, '2024-05-30'),
+    (1, 7, '2024-05-31'),
+    (2, 8, '2024-05-26'),
+    (3, 9, '2024-05-27'),
+    (5, 1, '2024-05-25'),
+    (6, 2, '2024-05-26'),
+    (7, 3, '2024-05-27')
+    ;
+
+INSERT INTO weather_reports (airport_code, report_time, weather_condition, visibility_km) VALUES
+    ('SYD', '2024-06-01 07:00', 'Sunny', 10.0),
+    ('SYD', '2024-06-01 08:30', 'Cloudy', 8.0),
+    ('SYD', '2024-06-01 09:00', 'Rain', 5.0),
+    ('SYD', '2024-06-01 10:00', 'Sunny', 12.0),
+    ('SYD', '2024-06-01 11:00', 'Rain', 3.0),
+    ('SYD', '2024-06-02 06:30', 'Cloudy', 6.0),
+    ('SYD', '2024-06-02 07:00', 'Sunny', 10.0),
+    ('SYD', '2024-06-02 08:30', 'Cloudy', 7.0),
+    ('SYD', '2024-06-02 08:00', 'Rain', 4.0),
+    ('SYD', '2024-06-03 06:30', 'Cloudy', 6.0),
+    ('CHC', '2024-06-01 12:00', 'Fog', 2.5),
+    ('CHC', '2024-06-02 12:45', 'Sunny', 9.0),
+    ('CHC', '2024-06-01 13:00', 'Rain', 3.0),
+    ('CHC', '2024-06-02 13:30', 'Cloudy', 5.0),
+    ('WLG', '2024-06-01 10:00', 'Sunny', 10.0),
+    ('WLG', '2024-06-01 11:00', 'Cloudy', 8.0),
+    ('WLG', '2024-06-02 09:00', 'Rain', 4.0),
+    ('WLG', '2024-06-02 10:30', 'Sunny', 12.0),
+    ('WLG', '2024-06-03 08:00', 'Cloudy', 6.0),
+    ('MEL', '2024-06-01 14:00', 'Sunny', 10.0),
+    ('MEL', '2024-06-01 15:00', 'Cloudy', 8.0),
+    ('MEL', '2024-06-02 13:00', 'Rain', 5.0),
+    ('MEL', '2024-06-02 14:30', 'Sunny', 12.0),
+    ('AKL', '2024-06-01 07:00', 'Sunny', 10.0),
+    ('AKL', '2024-06-01 08:30', 'Cloudy', 8.0),
+    ('AKL', '2024-06-01 09:00', 'Rain', 5.0),
+    ('AKL', '2024-06-01 10:00', 'Sunny', 12.0),
+    ('AKL', '2024-06-01 11:00', 'Rain', 3.0),
+    ('AKL', '2024-06-02 06:30', 'Cloudy', 6.0),
+    ('AKL', '2024-06-02 07:00', 'Sunny', 10.0),
+    ('AKL', '2024-06-02 08:30', 'Cloudy', 7.0),
+    ('AKL', '2024-06-02 08:00', 'Rain', 4.0),
+    ('AKL', '2024-06-03 06:30', 'Cloudy', 6.0)
+    ;
+
+INSERT INTO daily_flight_counts (flight_date, origin, destination, flight_count) VALUES
+    ('2024-06-01', 'AKL', 'SYD', 3),
+    ('2024-06-02', 'AKL', 'SYD', 4),
+    ('2024-06-03', 'AKL', 'SYD', 2),
+    ('2024-06-01', 'CHC', 'MEL', 2),
+    ('2024-06-02', 'CHC', 'MEL', 2),
+    ('2024-06-01', 'WLG', 'SYD', 1);
+

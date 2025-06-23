@@ -1,0 +1,49 @@
+WITH weather_matched AS (
+  SELECT
+      f.flight_id,
+      f.flight_number,
+      f.origin,
+      f.destination,
+      f.arrival_time,
+      f.delay_minutes,
+      wr.weather_condition,
+      wr.visibility_km,
+      wr.report_time,
+
+      ABS(EXTRACT(EPOCH FROM (f.arrival_time - wr.report_time))) as diff,
+      ROW_NUMBER() OVER (
+                PARTITION BY f.flight_id
+                ORDER BY ABS(EXTRACT(EPOCH FROM (f.arrival_time - wr.report_time)))
+                ) as rn
+
+  FROM flights f
+  LEFT JOIN weather_reports wr
+    ON f.destination = wr.airport_code
+   AND wr.report_time BETWEEN f.arrival_time - INTERVAL '30 minutes' AND f.arrival_time
+)
+
+
+, filtered_weather AS (
+  SELECT *
+  FROM weather_matched
+  WHERE rn = 1
+)
+
+
+SELECT
+    origin,
+    destination,
+    COUNT(*) AS num_flights,
+    ROUND(AVG(delay_minutes), 2) AS avg_delay_minutes,
+    MODE() WITHIN GROUP (ORDER BY weather_condition) AS common_weather,
+    ROUND(AVG(visibility_km), 2) AS avg_visibility_km
+FROM filtered_weather
+
+qualify common_weather is not null
+GROUP BY origin, destination
+ORDER BY origin, destination
+
+;
+
+
+

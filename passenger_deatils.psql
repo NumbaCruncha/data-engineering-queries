@@ -1,0 +1,26 @@
+/*
+For each passenger, return:
+
+- their full name, 
+- number of flights taken, 
+- and the number of distinct routes they’ve flown (based on origin-destination). 
+
+Order the results by the most active passengers first.
+*/
+
+select          bookings.passenger_id
+            ,   passengers.full_name
+            ,   count(flights.flight_id) as flight_count
+            ,   count(distinct concat_ws(':', flights.origin, flights.destination)) as route_count
+            
+from            bookings
+
+join            passengers   
+            on  bookings.passenger_id = passengers.passenger_id
+
+join            flights
+            on  flights.flight_id = bookings.flight_id
+
+group by        bookings.passenger_id
+            ,   passengers.full_name
+

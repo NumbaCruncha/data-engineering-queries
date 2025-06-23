@@ -1,0 +1,15 @@
+/*
+Which flight numbers have had delays more than 10 minutes on at least two different days?
+*/
+
+select          
+                flight_number
+            ,   count(distinct departure_time::date) as late_departure_days
+
+from            flights
+
+where           delay_minutes > 10
+
+group by        flight_number
+
+having          count(distinct departure_time::date)  >= 2

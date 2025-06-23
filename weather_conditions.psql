@@ -1,0 +1,52 @@
+/*
+Q2:
+We'd like to understand the conditions flights are landing in.
+Write a query that returns, for each flight with a delay over 10 minutes:
+- the flight ID
+- the destination airport
+- the weather condition reported at the destination airport within 30 minutes 
+    before arrival (use the closest report in time)
+
+If no weather report is available in that window, exclude the flight.
+
+*/
+
+
+with
+
+    flight_stats as (
+        
+        select          flights.flight_id
+                    ,   flights.destination 
+                    ,   weather_reports.weather_condition as destination_condition_within_30_mins 
+                    ,   row_number() over (
+                            partition by    flight_id
+                                        ,   destination
+                            order by        report_time desc
+                        ) as report_time_rank
+
+        from            flights
+
+        left join       weather_reports
+                    on  flights.destination = weather_reports.airport_code
+                    and weather_reports.report_time
+                        between flights.arrival_time - interval '30 minutes' 
+                            and flights.arrival_time 
+
+        where           flights.delay_minutes > 10
+
+
+)
+
+select          flight_id
+            ,   destination
+            ,   destination_condition_within_30_mins
+
+from            flight_stats
+
+where           report_time_rank = 1
+
+;
+
+
+

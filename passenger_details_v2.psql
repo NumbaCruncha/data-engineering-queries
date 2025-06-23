@@ -1,0 +1,49 @@
+
+with    
+
+
+    passenger_details as (
+
+    select      passengers.passenger_id
+            ,   passengers.full_name
+            ,   passengers.loyalty_status
+            ,   flights.destination
+            ,   count(*) over (
+                    partition by passengers.passenger_id, flights.destination
+            ) as destination_count            
+
+    from        passengers
+
+    join        bookings
+            on  passengers.passenger_id = bookings.passenger_id
+
+    join        flights
+            on  bookings.flight_id = flights.flight_id
+
+)
+
+,   ranked_destinations as (
+
+    select      passenger_details.passenger_id
+            ,   passenger_details.full_name
+            ,   passenger_details.loyalty_status
+            ,   passenger_details.destination
+            ,   passenger_details.destination_count
+            ,   row_number() over (
+                    partition by    passenger_details.passenger_id
+                    order by        destination_count desc
+                ) as destination_rank
+
+    from        passenger_details
+)
+
+
+
+select          full_name
+            ,   loyalty_status
+            ,   destination
+            ,   destination_count
+
+from            ranked_destinations
+
+where           destination_rank = 1

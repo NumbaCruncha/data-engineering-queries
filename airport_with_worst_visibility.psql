@@ -1,0 +1,31 @@
+WITH flight_stats AS (
+    SELECT
+        f.flight_id,
+        f.flight_number,
+        f.origin,
+        f.destination,
+        wr.visibility_km
+    FROM flights f
+    LEFT JOIN weather_reports wr
+        ON f.destination = wr.airport_code
+        AND wr.report_time BETWEEN f.arrival_time - INTERVAL '30 minutes' AND f.arrival_time
+),
+
+avg_visibility AS (
+    SELECT
+        fs.destination AS airport_code,
+        a.airport_name,
+        AVG(fs.visibility_km) AS avg_visibility
+    FROM flight_stats fs
+    JOIN airports a
+        ON fs.destination = a.airport_code
+    GROUP BY fs.destination, a.airport_name
+)
+
+SELECT
+    airport_code,
+    airport_name,
+    avg_visibility
+FROM avg_visibility
+ORDER BY avg_visibility ASC
+

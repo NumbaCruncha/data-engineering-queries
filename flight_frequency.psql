@@ -1,0 +1,40 @@
+/*
+“Using the data model provided, write a query to identify the top 3 most frequently flown routes by number of distinct flight occurrences. Return the route (in origin-destination format), total number of flights, and average delay in minutes for each. 
+Only include routes with more than one distinct flight.”
+*/
+with            
+
+    flight_frequency as (
+
+        select          concat_ws('_', origin, destination) as route
+                    ,   count(distinct flight_id) as flight_count
+                    ,   round(avg(delay_minutes), 2) as avg_delay_minutes
+
+        from            flights
+
+        group by        origin
+                    ,   destination
+
+        having          count(distinct flight_id) > 1
+
+)
+
+,   flight_frequency_rank as (
+
+        select          route
+                    ,   flight_count
+                    ,   avg_delay_minutes          
+                    ,   row_number() over (order by flight_count desc) as rn
+
+        from            flight_frequency
+
+)
+
+
+select                  route
+                    ,   flight_count
+                    ,   avg_delay_minutes
+
+from                    flight_frequency_rank
+
+where                   rn <= 3
