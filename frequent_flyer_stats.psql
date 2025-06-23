@@ -1,0 +1,55 @@
+/*
+Q3:
+Identify the top 3 days with the highest total number of passenger bookings, 
+along with the total number of unique passengers and total number of flights 
+booked on each day.
+
+Requirements:
+- Return one row per day.
+- Show: booking_date, total_passengers, total_flights, daily_booking_count.
+- Rank by daily_booking_count descending and return only the top 3 days.
+*/
+
+
+
+with
+
+    booking_details as (
+
+        select          bookings.booking_date
+                    ,   count(distinct bookings.booking_id) as daily_booking_count
+                    ,   count(distinct bookings.passenger_id) as total_passengers
+                    ,   count(bookings.flight_id) as total_flights
+
+        from            bookings
+
+        group by        bookings.booking_date
+
+
+    )
+
+,   daily_bookings_rank as (
+
+        select          booking_details.booking_date
+                    ,   booking_details.total_passengers
+                    ,   booking_details.total_flights
+                    ,   booking_details.daily_booking_count
+                    ,   row_number() over (
+                            partition by    booking_details.booking_date
+                            order by        booking_details.total_passengers desc
+                        ) as booking_rank
+
+        from            booking_details
+
+)
+
+
+select          daily_bookings_rank.booking_date
+            ,   daily_bookings_rank.total_passengers
+            ,   daily_bookings_rank.total_flights
+            ,   daily_bookings_rank.daily_booking_count
+
+
+from            daily_bookings_rank
+
+where           daily_bookings_rank.booking_rank <= 3
